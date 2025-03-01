@@ -9,8 +9,6 @@ exports.getLogs = (req, res) => {
 
 exports.addLog = (req, res) => {
     const { device_id, voltage, current, kwh } = req.body;
-
-    // Validasi data masuk
     if (!device_id || voltage === undefined || current === undefined || kwh === undefined) {
         return res.status(400).json({ error: "Missing required fields" });
     }

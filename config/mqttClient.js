@@ -8,25 +8,25 @@ const MQTT_TOPIC = process.env.MQTT_TOPIC;
 const client = mqtt.connect(MQTT_BROKER, MQTT_TOPIC);
 
 client.on('connect', () => {
-    console.log(`✅ Connected to MQTT Broker: ${MQTT_BROKER}`);
+    console.log(`Connected to MQTT Broker: ${MQTT_BROKER}`);
     client.subscribe(MQTT_TOPIC, (err) => {
         if (err) {
-            console.error('❌ Subscription failed:', err);
+            console.error('Subscription failed:', err);
         } else {
-            console.log(`📡 Subscribed to topic: ${MQTT_TOPIC}`);
+            console.log(`Subscribed to topic: ${MQTT_TOPIC}`);
         }
     });
 });
 
 client.on('message', (topic, message) => {
-    console.log(`📥 Received message on ${topic}: ${message.toString()}`);
+    console.log(`Received message on ${topic}: ${message.toString()}`);
 
     try {
         const data = JSON.parse(message.toString()); 
         const { device_id, voltage, current, kwh } = data;
 
         if (!device_id || voltage === undefined || current === undefined || kwh === undefined) {
-            console.error("⚠ Invalid data format:", data);
+            console.error("Invalid data format:", data);
             return;
         }
 
@@ -36,13 +36,13 @@ client.on('message', (topic, message) => {
         
         db.query(query, [device_id, voltage, current, kwh], (err, result) => {
             if (err) {
-                console.error("❌ Failed to insert into MySQL:", err);
+                console.error("Failed to insert into MySQL:", err);
             } else {
-                console.log(`✅ Data inserted: device_id=${device_id}, voltage=${voltage}, current=${current}, kwh=${kwh}`);
+                console.log(`Data inserted: device_id=${device_id}, voltage=${voltage}, current=${current}, kwh=${kwh}`);
             }
         });
     } catch (error) {
-        console.error("❌ Error parsing MQTT message:", error);
+        console.error("Error parsing MQTT message:", error);
     }
 });
 

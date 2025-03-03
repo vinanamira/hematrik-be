@@ -2,6 +2,13 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const db = require('../config/database');
 
+exports.getUsers = (req, res) => {
+    db.query('SELECT user_id, username, email FROM user', (err, results) => {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json(results);
+    });
+};
+
 exports.registerUser = (req, res) => {
     const { username, password, email } = req.body;
 

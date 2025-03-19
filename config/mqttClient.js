@@ -1,49 +1,42 @@
-require('dotenv').config();
 const mqtt = require('mqtt');
-const db = require('./database'); 
+require('dotenv').config();
 
-const MQTT_BROKER = process.env.MQTT_BROKER;
-const MQTT_TOPIC = process.env.MQTT_TOPIC;
+const MQTT_BROKER_URL = `${process.env.MQTT_BROKER_URL}:${process.env.MQTT_PORT}`;
+const MQTT_USERNAME = process.env.MQTT_USERNAME;
+const MQTT_PASSWORD = process.env.MQTT_PASSWORD;
 
-const client = mqtt.connect(MQTT_BROKER, MQTT_TOPIC);
+const options = {
+    clientId: 'mqtt-explorer-b5e48428',
+    username: MQTT_USERNAME,
+    password: MQTT_PASSWORD,
+    reconnectPeriod: 30000, 
+    clean: true
+};
+
+const client = mqtt.connect(MQTT_BROKER_URL, options);
 
 client.on('connect', () => {
-    console.log(`Connected to MQTT Broker: ${MQTT_BROKER}`);
-    client.subscribe(MQTT_TOPIC, (err) => {
-        if (err) {
-            console.error('Subscription failed:', err);
+    console.log(`✅ Connected to MQTT Broker at ${MQTT_BROKER_URL}`);
+
+    client.subscribe('sensor/data', (err) => {
+        if (!err) {
+            console.log('✅ Subscribed to topic: sensor/data');
         } else {
-            console.log(`Subscribed to topic: ${MQTT_TOPIC}`);
+            console.error('❌ Subscription error:', err);
         }
     });
 });
 
 client.on('message', (topic, message) => {
-    console.log(`Received message on ${topic}: ${message.toString()}`);
+    console.log(`📩 Received message from topic "${topic}": ${message.toString()}`);
+});
 
-    try {
-        const data = JSON.parse(message.toString()); 
-        const { device_id, voltage, current, kwh } = data;
+client.on('error', (err) => {
+    console.error('❌ MQTT Connection Error:', err);
+});
 
-        if (!device_id || voltage === undefined || current === undefined || kwh === undefined) {
-            console.error("Invalid data format:", data);
-            return;
-        }
-
-        const query = `
-            INSERT INTO Electricity_Log (device_id, voltage, current, kwh) 
-            VALUES (?, ?, ?, ?)`;
-        
-        db.query(query, [device_id, voltage, current, kwh], (err, result) => {
-            if (err) {
-                console.error("Failed to insert into MySQL:", err);
-            } else {
-                console.log(`Data inserted: device_id=${device_id}, voltage=${voltage}, current=${current}, kwh=${kwh}`);
-            }
-        });
-    } catch (error) {
-        console.error("Error parsing MQTT message:", error);
-    }
+client.on('close', () => {
+    console.warn('⚠️ MQTT Connection Closed. Reconnecting...');
 });
 
 module.exports = client;

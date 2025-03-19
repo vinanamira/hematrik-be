@@ -1,3 +1,4 @@
+require('dotenv').config();
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const db = require('../config/database');
@@ -16,7 +17,7 @@ exports.registerUser = (req, res) => {
         if (err) return res.status(500).json({ error: err.message });
 
         if (results.length > 0) {
-            return res.status(400).json({ message: "Username or email already exists" });
+            return res.status(400).json({ message: "Username atau email sudah terdaftar" });
         }
 
         bcrypt.hash(password, 10, (err, hash) => {
@@ -28,7 +29,7 @@ exports.registerUser = (req, res) => {
                 (err, result) => {
                     if (err) return res.status(500).json({ error: err.message });
 
-                    res.json({ message: "User registered successfully" });
+                    res.json({ message: "Registrasi Berhasil" });
                 }
             );
         });
@@ -38,11 +39,11 @@ exports.registerUser = (req, res) => {
 exports.loginUser = (req, res) => {
     const { email, password } = req.body;
 
-    db.query('SELECT * FROM User WHERE email = ?', [email], (err, results) => {
+    db.query('SELECT * FROM User WHERE LOWER(email) = LOWER(?)', [email.trim()], (err, results) => {
         if (err) return res.status(500).json({ error: err.message });
 
         if (results.length === 0) {
-            return res.status(401).json({ message: "User not found" });
+            return res.status(401).json({ message: "Pengguna tidak ditemukan" });
         }
         const user = results[0];
 
@@ -50,7 +51,7 @@ exports.loginUser = (req, res) => {
             if (err) return res.status(500).json({ error: err.message });
 
             if (!isMatch) {
-                return res.status(401).json({ message: "Invalid password" });
+                return res.status(401).json({ message: "Password salah!" });
             }
 
             const token = jwt.sign(
@@ -59,7 +60,7 @@ exports.loginUser = (req, res) => {
                 { expiresIn: '1h' }
             );
 
-            res.json({ message: "Login successful", token });
+            res.json({ message: "Berhasil Login!", token });
         });
     });
 };

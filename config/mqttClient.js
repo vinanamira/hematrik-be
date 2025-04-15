@@ -20,7 +20,7 @@ client.on('connect', () => {
 
     client.subscribe('tasmota/discovery', (err) => {
         if (!err) {
-            console.log('Subscribed to topic: masmota/discovery');
+            console.log('Subscribed to topic: tasmota/discovery');
         } else {
             console.error('Subscription error:', err);
         }

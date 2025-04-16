@@ -1,4 +1,4 @@
-const db = require('../config/database.js');
+const db = require('../config/database');
 
 exports.getAllDevices = async (req, res) => {
   try {

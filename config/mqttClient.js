@@ -1,6 +1,6 @@
 require('dotenv').config();
 const mqtt = require('mqtt');
-const db = require('../config/database');
+const db = require('../config/database.js');
 
 const client = mqtt.connect({
   host: process.env.MQTT_HOST,

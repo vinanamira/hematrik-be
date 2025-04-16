@@ -9,7 +9,6 @@ const client = mqtt.connect({
   password: process.env.MQTT_PASSWORD,
 });
 
-// Ambil base topic dari .env, lalu buat kombinasi SENSOR dan LWT
 const baseTopics = process.env.MQTT_TOPICS.split(',').map(t => t.trim());
 const topics = [];
 baseTopics.forEach(base => {
@@ -22,7 +21,7 @@ client.on('connect', () => {
   topics.forEach(topic => {
     client.subscribe(topic, err => {
       if (err) console.error(`Failed to subscribe to ${topic}:`, err);
-      else console.log(`📡 Subscribed to ${topic}`);
+      else console.log(`Subscribed to ${topic}`);
     });
   });
 });
@@ -30,14 +29,22 @@ client.on('connect', () => {
 client.on('message', async (topic, message) => {
   try {
     const topicParts = topic.split('/');
-    const device_id = topicParts[2];
-    const topicType = topicParts[3]; // SENSOR or LWT
+    const device_code = topicParts[2];
+    const topicType = topicParts[3]; // SENSOR atau LWT
     const payload = message.toString();
+
+    // Cari device_id dari database berdasarkan device_code
+    const [rows] = await db.execute('SELECT device_id FROM Device WHERE device_code = ?', [device_code]);
+    if (!rows.length) {
+      console.warn(`⚠️ Device with code ${device_code} not found in DB`);
+      return;
+    }
+    const device_id = rows[0].device_id;
 
     if (topicType === 'LWT') {
       const status = payload.toLowerCase();
       await db.execute('UPDATE Device SET status = ? WHERE device_id = ?', [status, device_id]);
-      console.log(`Status updated: ${device_id} → ${status}`);
+      console.log(`🔄 Status updated: ${device_code} → ${status}`);
       return;
     }
 
@@ -72,7 +79,7 @@ client.on('message', async (topic, message) => {
           ]
         );
 
-        console.log(`Logged ENERGY data for ${device_id}`);
+        console.log(`Logged ENERGY data for ${device_code}`);
       }
     }
   } catch (err) {

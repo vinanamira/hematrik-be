@@ -36,7 +36,7 @@ client.on('message', async (topic, message) => {
     // Cari device_id dari database berdasarkan device_code
     const [rows] = await db.execute('SELECT device_id FROM Device WHERE device_code = ?', [device_code]);
     if (!rows.length) {
-      console.warn(`⚠️ Device with code ${device_code} not found in DB`);
+      console.warn(`Device with code ${device_code} not found in DB`);
       return;
     }
     const device_id = rows[0].device_id;

@@ -1,42 +1,55 @@
-const mqtt = require('mqtt');
 require('dotenv').config();
+const mqtt = require('mqtt');
+const db = require('../config/database');
 
-const MQTT_BROKER_URL = `${process.env.MQTT_BROKER_URL}:${process.env.MQTT_PORT}`;
-const MQTT_USERNAME = process.env.MQTT_USERNAME;
-const MQTT_PASSWORD = process.env.MQTT_PASSWORD;
+const client = mqtt.connect({
+  host: process.env.MQTT_HOST,
+  port: Number(process.env.MQTT_PORT),
+  username: process.env.MQTT_USERNAME,
+  password: process.env.MQTT_PASSWORD,
+});
 
-const options = {
-    clientId: 'mqtt-explorer-b59e5b32',
-    username: MQTT_USERNAME,
-    password: MQTT_PASSWORD,
-    reconnectPeriod: 300000, 
-    clean: true
-};
-
-const client = mqtt.connect(MQTT_BROKER_URL, options);
+const topics = process.env.MQTT_TOPICS.split(',').map(topic => topic.trim());
 
 client.on('connect', () => {
-    console.log(`Connected to MQTT Broker at ${MQTT_BROKER_URL}`);
-
-    client.subscribe('tasmota/discovery', (err) => {
-        if (!err) {
-            console.log('Subscribed to topic: tasmota/discovery');
-        } else {
-            console.error('Subscription error:', err);
-        }
+  console.log('Connected to MQTT broker');
+  topics.forEach(topic => {
+    client.subscribe(topic, err => {
+      if (err) console.error(`Failed to subscribe to ${topic}:`, err);
+      else console.log(`Subscribed to ${topic}`);
     });
+  });
 });
 
-client.on('message', (topic, message) => {
-    console.log(`Received message from topic "${topic}": ${message.toString()}`);
-});
+client.on('message', async (topic, message) => {
+  try {
+    const topicParts = topic.split('/');
+    const device_id = topicParts[2];
+    const payload = message.toString();
 
-client.on('error', (err) => {
-    console.error('MQTT Connection Error:', err);
-});
+    let json;
+    try {
+      json = JSON.parse(payload);
+    } catch {
+      json = payload; // Handle Online/Offline string
+    }
 
-client.on('close', () => {
-    console.warn('MQTT Connection Closed. Reconnecting...');
-});
+    if (json === 'Online' || json === 'Offline') {
+      await db.execute('UPDATE Device SET status = ? WHERE device_id = ?', [json.toLowerCase(), device_id]);
+      return;
+    }
 
-module.exports = client;
+    if (json.ENERGY) {
+      const { TotalStartTime, Total, Yesterday, Today, Power, ApparentPower, ReactivePower, Factor, Voltage, Current } = json.ENERGY;
+      const time = json.Time || new Date().toISOString();
+
+      await db.execute(
+        `INSERT INTO Electricity_Log (device_id, total_kwh, today_kwh, yesterday_kwh, power, apparent_power, reactive_power, factor, voltage, current, time_recorded)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [device_id, Total, Today, Yesterday, Power, ApparentPower, ReactivePower, Factor, Voltage, Current, time]
+      );
+    }
+  } catch (err) {
+    console.error('MQTT message error:', err);
+  }
+});

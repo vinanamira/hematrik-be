@@ -18,10 +18,10 @@ baseTopics.forEach(base => {
 });
 
 client.on('connect', () => {
-  console.log('✅ Connected to MQTT broker');
+  console.log('Connected to MQTT broker');
   topics.forEach(topic => {
     client.subscribe(topic, err => {
-      if (err) console.error(`❌ Failed to subscribe to ${topic}:`, err);
+      if (err) console.error(`Failed to subscribe to ${topic}:`, err);
       else console.log(`📡 Subscribed to ${topic}`);
     });
   });
@@ -37,7 +37,7 @@ client.on('message', async (topic, message) => {
     if (topicType === 'LWT') {
       const status = payload.toLowerCase();
       await db.execute('UPDATE Device SET status = ? WHERE device_id = ?', [status, device_id]);
-      console.log(`🔄 Status updated: ${device_id} → ${status}`);
+      console.log(`Status updated: ${device_id} → ${status}`);
       return;
     }
 

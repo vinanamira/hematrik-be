@@ -86,3 +86,5 @@ client.on('message', async (topic, message) => {
     console.error('Error handling MQTT message:', err.message);
   }
 });
+
+module.exports = client;

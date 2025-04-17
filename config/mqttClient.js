@@ -10,41 +10,32 @@ const client = mqtt.connect({
 });
 
 const baseTopics = process.env.MQTT_TOPICS.split(',').map(t => t.trim());
-const topics = [];
-baseTopics.forEach(base => {
-  topics.push(`${base}/SENSOR`);
-  topics.push(`${base}/LWT`);
-});
+const topics = baseTopics.flatMap(base => [`${base}/SENSOR`, `${base}/LWT`]);
 
 client.on('connect', () => {
   console.log('Connected to MQTT broker');
   topics.forEach(topic => {
     client.subscribe(topic, err => {
-      if (err) console.error(`Failed to subscribe to ${topic}:`, err);
+      if (err) console.error(`Failed to subscribe ${topic}:`, err);
       else console.log(`Subscribed to ${topic}`);
     });
   });
 });
 
 client.on('message', async (topic, message) => {
+  const parts = topic.split('/');
+  const deviceId = parts[2];      
+  const topicType = parts[3];     // 'SENSOR' atau 'LWT'
+  const payload = message.toString();
+
   try {
-    const topicParts = topic.split('/');
-    const device_code = topicParts[2];
-    const topicType = topicParts[3]; // SENSOR atau LWT
-    const payload = message.toString();
-
-    // Cari device_id dari database berdasarkan device_code
-    const [rows] = await db.execute('SELECT device_id FROM Device WHERE device_code = ?', [device_code]);
-    if (!rows.length) {
-      console.warn(`Device with code ${device_code} not found in DB`);
-      return;
-    }
-    const device_id = rows[0].device_id;
-
     if (topicType === 'LWT') {
-      const status = payload.toLowerCase();
-      await db.execute('UPDATE Device SET status = ? WHERE device_id = ?', [status, device_id]);
-      console.log(`🔄 Status updated: ${device_code} → ${status}`);
+      const status = payload.toLowerCase(); // 'online' atau 'offline'
+      await db.execute(
+        'UPDATE Device SET status = ? WHERE device_id = ?',
+        [status, deviceId]
+      );
+      console.log(`[${deviceId}] status → ${status}`);
       return;
     }
 
@@ -52,38 +43,40 @@ client.on('message', async (topic, message) => {
       let json;
       try {
         json = JSON.parse(payload);
-      } catch (err) {
-        console.error('Failed to parse SENSOR JSON:', err.message);
+      } catch {
+        console.error(`Invalid JSON on ${topic}`);
+        return;
+      }
+      const e = json.ENERGY;
+      if (!e) {
+        console.warn(`No ENERGY field on ${topic}`);
         return;
       }
 
-      if (json.ENERGY) {
-        const {
-          TotalStartTime, Total, Yesterday, Today,
+      const {
+        Total, Yesterday, Today,
+        Power, ApparentPower, ReactivePower, Factor,
+        Voltage, Current
+      } = e;
+      const timeRecorded = json.Time || new Date().toISOString();
+
+      await db.execute(
+        `INSERT INTO Electricity_Log (
+           device_id, total_kwh, today_kwh, yesterday_kwh,
+           power, apparent_power, reactive_power, factor,
+           voltage, current, time_recorded
+         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          deviceId,
+          Total, Today, Yesterday,
           Power, ApparentPower, ReactivePower, Factor,
-          Voltage, Current
-        } = json.ENERGY;
-
-        const time = json.Time || new Date().toISOString();
-
-        await db.execute(
-          `INSERT INTO Electricity_Log (
-            device_id, total_kwh, today_kwh, yesterday_kwh,
-            power, apparent_power, reactive_power, factor,
-            voltage, current, time_recorded
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-          [
-            device_id, Total, Today, Yesterday,
-            Power, ApparentPower, ReactivePower, Factor,
-            Voltage, Current, time
-          ]
-        );
-
-        console.log(`Logged ENERGY data for ${device_code}`);
-      }
+          Voltage, Current, timeRecorded
+        ]
+      );
+      console.log(`[${deviceId}] logged ENERGY data`);
     }
   } catch (err) {
-    console.error('Error handling MQTT message:', err.message);
+    console.error(`Error on ${topic}:`, err.message);
   }
 });
 

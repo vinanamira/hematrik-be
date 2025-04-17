@@ -3,6 +3,7 @@ const express = require('express');
 const app = express();
 const routes = require('./routes/routes');
 require('./config/mqttClient');
+require('./config/database');
 
 app.use(express.json());
 app.use('/api', routes);

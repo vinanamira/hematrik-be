@@ -2,7 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const app = express();
 const routes = require('./routes/routes');
-require('./config/database');
+require('./config/mqttClient');
 
 app.use(express.json());
 app.use('/api', routes);

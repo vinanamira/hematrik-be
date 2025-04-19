@@ -83,10 +83,7 @@ client.on('message', async (topic, message) => {
           ]
         );
         console.log(`[${deviceId}] logged ENERGY data`);
-      } else {
-        const diffSec = Math.floor((now - lastReceived[deviceId]) / 1000);
-        console.log(`[SKIP] [${deviceId}] data ignored, only ${diffSec}s since last save`);
-      }
+      } 
     }
   } catch (err) {
     console.error(`Error on ${topic}:`, err.message);

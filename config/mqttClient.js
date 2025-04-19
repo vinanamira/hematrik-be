@@ -2,6 +2,8 @@ require('dotenv').config();
 const mqtt = require('mqtt');
 const db = require('../config/database');
 
+const lastReceived = {};
+
 const client = mqtt.connect({
   host: process.env.MQTT_HOST,
   port: Number(process.env.MQTT_PORT),
@@ -24,11 +26,12 @@ client.on('connect', () => {
 
 client.on('message', async (topic, message) => {
   const parts = topic.split('/');
-  const deviceId = parts[2];      
+  const deviceId = parts[2];      // device_id seperti '75AA3A'
   const topicType = parts[3];     // 'SENSOR' atau 'LWT'
   const payload = message.toString();
 
   try {
+    // Handle status update dari LWT
     if (topicType === 'LWT') {
       const status = payload.toLowerCase(); // 'online' atau 'offline'
       await db.execute(
@@ -39,6 +42,7 @@ client.on('message', async (topic, message) => {
       return;
     }
 
+    // Data yg msuk stiap 5 menit
     if (topicType === 'SENSOR') {
       let json;
       try {
@@ -47,33 +51,42 @@ client.on('message', async (topic, message) => {
         console.error(`Invalid JSON on ${topic}`);
         return;
       }
-      const e = json.ENERGY;
-      if (!e) {
+
+      const energy = json.ENERGY;
+      if (!energy) {
         console.warn(`No ENERGY field on ${topic}`);
         return;
       }
 
-      const {
-        Total, Yesterday, Today,
-        Power, ApparentPower, ReactivePower, Factor,
-        Voltage, Current
-      } = e;
-      const timeRecorded = json.Time || new Date().toISOString();
+      const now = Date.now();
+      if (!lastReceived[deviceId] || now - lastReceived[deviceId] >= 5 * 60 * 1000) {
+        lastReceived[deviceId] = now;
 
-      await db.execute(
-        `INSERT INTO Electricity_Log (
-           device_id, total_kwh, today_kwh, yesterday_kwh,
-           power, apparent_power, reactive_power, factor,
-           voltage, current, time_recorded
-         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [
-          deviceId,
-          Total, Today, Yesterday,
+        const {
+          Total, Yesterday, Today,
           Power, ApparentPower, ReactivePower, Factor,
-          Voltage, Current, timeRecorded
-        ]
-      );
-      console.log(`[${deviceId}] logged ENERGY data`);
+          Voltage, Current
+        } = energy;
+        const timeRecorded = json.Time || new Date().toISOString();
+
+        await db.execute(
+          `INSERT INTO Electricity_Log (
+             device_id, total_kwh, today_kwh, yesterday_kwh,
+             power, apparent_power, reactive_power, factor,
+             voltage, current, time_recorded
+           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [
+            deviceId,
+            Total, Today, Yesterday,
+            Power, ApparentPower, ReactivePower, Factor,
+            Voltage, Current, timeRecorded
+          ]
+        );
+        console.log(`[${deviceId}] logged ENERGY data`);
+      } else {
+        const diffSec = Math.floor((now - lastReceived[deviceId]) / 1000);
+        console.log(`[SKIP] [${deviceId}] data ignored, only ${diffSec}s since last save`);
+      }
     }
   } catch (err) {
     console.error(`Error on ${topic}:`, err.message);

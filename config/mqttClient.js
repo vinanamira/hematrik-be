@@ -42,7 +42,7 @@ client.on('message', async (topic, message) => {
       return;
     }
 
-    // Data yg msuk stiap 5 menit
+    // Data yg msuk stiap 3 menit
     if (topicType === 'SENSOR') {
       let json;
       try {
@@ -59,7 +59,7 @@ client.on('message', async (topic, message) => {
       }
 
       const now = Date.now();
-      if (!lastReceived[deviceId] || now - lastReceived[deviceId] >= 5 * 60 * 1000) {
+      if (!lastReceived[deviceId] || now - lastReceived[deviceId] >= 3 * 60 * 1000) {
         lastReceived[deviceId] = now;
 
         const {

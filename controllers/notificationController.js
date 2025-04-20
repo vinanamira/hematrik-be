@@ -1,8 +1,4 @@
-require('dotenv').config();
-require('../config/mqttClient');
-
-const db = require('../config/database');
-const cron = require('node-cron');
+const db = require('../config/mqttClient');
 
 const checkOnlineDevicesAndNotify = async () => {
   try {
@@ -19,25 +15,21 @@ const checkOnlineDevicesAndNotify = async () => {
 
     const notifPromises = devices.map(({ device_id, device_name }) => {
       const notif_message = `${device_name} masih menyala pada pukul 17.00`;
+      const notif_time = new Date();
+
       return db.execute(
-        `INSERT INTO Notification_Log (device_id, notif_message, is_sent)
-         VALUES (?, ?, ?)`,
-        [device_id, notif_message, 0]
+        `INSERT INTO Notification_Log (device_id, notif_message, is_sent, notif_time)
+         VALUES (?, ?, ?, ?)`,
+        [device_id, notif_message, 0, notif_time]
       );
     });
 
     await Promise.all(notifPromises);
-    console.log(`Notifikasi dibuat untuk ${devices.length} perangkat`);
-  } catch (err) {
-    console.error('Gagal menjalankan notifikasi:', err.message);
+    console.log(`[CRON] ${devices.length} notifikasi berhasil disimpan ke database.`);
+
+  } catch (error) {
+    console.error('[CRON] Gagal menjalankan notifikasi:', error.message);
   }
 };
-
-cron.schedule('0 17 * * *', () => {
-  checkOnlineDevicesAndNotify();
-}, {
-  scheduled: true,
-  timezone: 'Asia/Jakarta'
-});
 
 module.exports = { checkOnlineDevicesAndNotify };

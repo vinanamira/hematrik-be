@@ -1,6 +1,5 @@
-require('dotenv').config(); 
 const { checkOnlineDevicesAndNotify } = require('../controllers/notificationController');
-const db = require('./database'); 
+const db = require('./mqttClient'); 
 
 (async () => {
   try {

@@ -32,4 +32,4 @@ const checkOnlineDevicesAndNotify = async () => {
   }
 };
 
-module.exports = checkOnlineDevicesAndNotify;
+module.exports = { checkOnlineDevicesAndNotify };

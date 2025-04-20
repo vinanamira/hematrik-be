@@ -1,4 +1,4 @@
-const db = require('../config/mqttClient');
+const db = require('../config/database');
 const cron = require('node-cron');
 
 const checkOnlineDevicesAndNotify = async () => {

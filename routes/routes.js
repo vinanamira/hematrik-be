@@ -1,10 +1,10 @@
 const express = require('express');
 const router = express.Router();
 
-const deviceController = require('./controllers/deviceController');
-const electricityLogController = require('./controllers/electricityLogController');
-const galonPhotoController = require('./controllers/galonPhotoController');
-const { controlDevice } = require('./controllers/deviceControlController');
+const deviceController = require('../controllers/deviceController');
+const electricityLogController = require('../controllers/electricityLogController');
+const galonPhotoController = require('../controllers/galonPhotoController');
+const { controlDevice } = require('../controllers/deviceController');
 
 // Device 
 router.get('/devices', deviceController.getAllDevices);

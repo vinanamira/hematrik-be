@@ -4,10 +4,10 @@ require('./config/cronJobs');
 
 const express = require('express');
 const app = express();
-const routes = require('./routes/routes');
+const router = require('./routes/routes');
 
 app.use(express.json());
-app.use('/api', routes);
+app.use('/api', router);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {

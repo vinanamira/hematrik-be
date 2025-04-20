@@ -90,4 +90,4 @@ client.on('message', async (topic, message) => {
   }
 });
 
-module.exports = client;
+module.exports = {client};

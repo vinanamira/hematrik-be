@@ -1,35 +1,74 @@
-const db = require('../config/database');
+// controllers/notificationController.js
+const db   = require('../config/database');
+const cron = require('node-cron');
 
+// ① Cron job: simpan notifikasi tiap hari jam 17.00
 const checkOnlineDevicesAndNotify = async () => {
   try {
-    console.log('[CRON] Mengecek perangkat online untuk notifikasi jam 17.00...');
-
     const [devices] = await db.execute(
       "SELECT device_id, device_name FROM Device WHERE status = 'online'"
     );
-
-    if (devices.length === 0) {
-      console.log('Semua perangkat sudah mati sebelum jam 17.00');
-      return;
-    }
-
-    const notifPromises = devices.map(({ device_id, device_name }) => {
+    for (const { device_id, device_name } of devices) {
       const notif_message = `${device_name} masih menyala pada pukul 17.00`;
-      const notif_time = new Date();
-
-      return db.execute(
-        `INSERT INTO Notification_Log (device_id, notif_message, is_sent, notif_time)
-         VALUES (?, ?, ?, ?)`,
-        [device_id, notif_message, 0, notif_time]
+      await db.execute(
+        `INSERT INTO Notification_Log 
+           (device_id, notif_message, is_sent, notif_time)
+         VALUES (?, ?, 0, NOW())`,
+        [device_id, notif_message]
       );
-    });
-
-    await Promise.all(notifPromises);
-    console.log(`[CRON] ${devices.length} notifikasi berhasil disimpan ke database.`);
-
-  } catch (error) {
-    console.error('[CRON] Gagal menjalankan notifikasi:', error.message);
+    }
+    console.log(`[CRON] ${devices.length} notifikasi disimpan.`);
+  } catch (err) {
+    console.error('[CRON] Gagal menyimpan notifikasi:', err.message);
   }
 };
 
-module.exports = { checkOnlineDevicesAndNotify };
+// schedule cron job (pastikan ini di-require sekali di server.js)
+cron.schedule('0 17 * * *', () => {
+  console.log('[CRON] Trigger notifikasi 17.00 WIB');
+  checkOnlineDevicesAndNotify();
+}, { timezone: 'Asia/Jakarta' });
+
+// ② Ambil **satu notifikasi terbaru per device** (max 3)
+const getNotifications = async (req, res) => {
+  try {
+    const [devices] = await db.execute('SELECT device_id, device_name FROM Device');
+    const result = [];
+    for (const { device_id, device_name } of devices) {
+      const [[notif]] = await db.execute(
+        `SELECT * FROM Notification_Log
+         WHERE device_id = ?
+         ORDER BY notif_time DESC
+         LIMIT 1`,
+        [device_id]
+      );
+      if (notif) result.push({ device_id, device_name, ...notif });
+    }
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// ③ Tandai notifikasi sudah dikirim / dibaca
+const markAsSent = async (req, res) => {
+  try {
+    const { notif_id } = req.params;
+    const [result] = await db.execute(
+      'UPDATE Notification_Log SET is_sent = 1 WHERE notif_id = ?',
+      [notif_id]
+    );
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: 'Notifikasi tidak ditemukan' });
+    }
+    res.json({ message: 'Notifikasi ditandai terkirim' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+module.exports = {
+  checkOnlineDevicesAndNotify,
+  getNotifications,
+  markAsSent
+};

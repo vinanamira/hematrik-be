@@ -4,6 +4,7 @@ const router = express.Router();
 const deviceController = require('../controllers/deviceController');
 const electricityLogController = require('../controllers/electricityLogController');
 const galonPhotoController = require('../controllers/galonPhotoController');
+const notificationController = require('../controllers/notificationController');
 const { controlDevice } = require('../controllers/deviceController');
 
 // Device 
@@ -11,8 +12,10 @@ router.get('/devices', deviceController.getAllDevices);
 router.get('/devices/:device_id', deviceController.getDeviceById);
 
 // Electricity log 
-router.get('/logs', electricityLogController.getAllLogs);
+router.get('/logs', electricityLogController.getAllLogs);           // ?limit=50
 router.get('/logs/:device_id', electricityLogController.getLogsByDevice);
+router.get('/logs/latest', electricityLogController.getLatestLogsAll);
+router.get('/logs/latest/:device_id', electricityLogController.getLogsByDevice);
 
 // Galon photo routes
 router.post('/upload-photo', galonPhotoController.uploadPhoto);
@@ -20,5 +23,9 @@ router.get('/photos', galonPhotoController.getPhotos);
 
 // Device control route (lampu/dispenser)
 router.post('/device/:device_id/control', controlDevice);
+
+// Notifikasi
+router.get('/notifications', notificationController.getNotifications);
+router.patch('/notifications/:notif_id/sent', notificationController.markAsSent);
 
 module.exports = router;

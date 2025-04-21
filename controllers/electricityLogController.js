@@ -27,15 +27,15 @@ async function getLogsByDevice(req, res) {
 async function getLatestLogsAll(req, res) {
   try {
     const [logss] = await db.execute(`
-      // SELECT e.*
-      // FROM Electricity_Log AS e
-      // INNER JOIN (
-      //   SELECT device_id, MAX(time_recorded) AS max_time
-      //   FROM Electricity_Log
-      //   GROUP BY device_id
-      // ) AS sub
-      //   ON e.device_id = sub.device_id
-      //  AND e.time_recorded = sub.max_time
+      SELECT e.*
+      FROM Electricity_Log AS e
+      INNER JOIN (
+        SELECT device_id, MAX(time_recorded) AS max_time
+        FROM Electricity_Log
+        GROUP BY device_id
+      ) AS sub
+        ON e.device_id = sub.device_id
+       AND e.time_recorded = sub.max_time
     `);
     res.json(logss);
   } catch (err) {

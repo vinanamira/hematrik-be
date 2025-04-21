@@ -24,9 +24,9 @@ async function getLogsByDevice(req, res) {
   }
 }
 
-async function getLatestLogsAll(req, res) {
+async function getAllLatestLogs(req, res) {
   try {
-    const [logss] = await db.execute(`
+    const [logs] = await db.execute(`
       SELECT e.*
       FROM Electricity_Log AS e
       INNER JOIN (
@@ -37,7 +37,8 @@ async function getLatestLogsAll(req, res) {
         ON e.device_id = sub.device_id
        AND e.time_recorded = sub.max_time
     `);
-    res.json(logss);
+    
+    res.json(logs);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -62,6 +63,6 @@ async function getLatestByDevice(req, res) {
 module.exports = {
   getAllLogs,
   getLogsByDevice,
-  getLatestLogsAll,
+  getAllLatestLogs,
   getLatestByDevice,
 };

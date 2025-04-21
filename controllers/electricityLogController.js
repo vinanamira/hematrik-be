@@ -1,19 +1,17 @@
 const db = require('../config/database');
 
-const getAllLogs = async (req, res) => {
+async function getAllLogs(req, res) {
   try {
-    const limit = parseInt(req.query.limit, 10) || 100;
     const [logs] = await db.execute(
-      'SELECT * FROM Electricity_Log ORDER BY time_recorded DESC LIMIT ?',
-      [limit]
+      'SELECT * FROM Electricity_Log ORDER BY time_recorded DESC'
     );
     res.json(logs);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
-};
+}
 
-const getLogsByDevice = async (req, res) => {
+async function getLogsByDevice(req, res) {
   try {
     const { device_id } = req.params;
     const [logs] = await db.execute(
@@ -24,27 +22,44 @@ const getLogsByDevice = async (req, res) => {
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
-};
+}
 
-const getLatestLogsAll = async (req, res) => {
+async function getLatestLogsAll(req, res) {
   try {
-    const [devices] = await db.execute('SELECT device_id, device_name FROM Device');
-    const result = [];
-    for (const { device_id, device_name } of devices) {
-      const [[log]] = await db.execute(
-        'SELECT * FROM Electricity_Log WHERE device_id = ? ORDER BY time_recorded DESC LIMIT 1',
-        [device_id]
-      );
-      if (log) result.push({ device_id, device_name, ...log });
-    }
-    res.json(result);
+    const [latest] = await db.execute(
+      `SELECT e.*
+       FROM Electricity_Log e
+       JOIN (
+         SELECT device_id, MAX(time_recorded) AS tmax
+         FROM Electricity_Log
+         GROUP BY device_id
+       ) m ON e.device_id = m.device_id AND e.time_recorded = m.tmax`
+    );
+    res.json(latest);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
-};
+}
+
+async function getLatestByDevice(req, res) {
+  try {
+    const { device_id } = req.params;
+    const [rows] = await db.execute(
+      `SELECT * FROM Electricity_Log
+       WHERE device_id = ?
+       ORDER BY time_recorded DESC
+       LIMIT 1`,
+      [device_id]
+    );
+    res.json(rows[0] || null);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+}
 
 module.exports = {
   getAllLogs,
   getLogsByDevice,
-  getLatestLogsAll
+  getLatestLogsAll,
+  getLatestByDevice,
 };

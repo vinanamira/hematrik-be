@@ -1,31 +1,23 @@
 const express = require('express');
 const router = express.Router();
 
-const deviceController = require('../controllers/deviceController');
-const electricityLogController = require('../controllers/electricityLogController');
-const galonPhotoController = require('../controllers/galonPhotoController');
-const notificationController = require('../controllers/notificationController');
-const { controlDevice } = require('../controllers/deviceController');
+const device = require('../controllers/deviceController');
+const logListrik = require('../controllers/electricityLogController');
+const notifikasi = require('../controllers/notificationController');
 
-// Device 
-router.get('/devices', deviceController.getAllDevices);
-router.get('/devices/:device_id', deviceController.getDeviceById);
+// Device
+router.get('/devices', device.getAllDevices);
+router.get('/devices/:device_id', device.getDeviceById);
+router.post('/device/:device_id/control', device.controlDevice);
 
-// Electricity log 
-router.get('/logs', electricityLogController.getAllLogs);           // ?limit=50
-router.get('/logs/:device_id', electricityLogController.getLogsByDevice);
-router.get('/logs/latest', electricityLogController.getLatestLogsAll);
-router.get('/logs/latest/:device_id', electricityLogController.getLogsByDevice);
+// Electricity Log
+router.get('/logs', logListrik.getAllLogs);
+router.get('/logs/:device_id', logListrik.getLogsByDevice);
+router.get('/logs/latest', logListrik.getLatestLogsAll);
+router.get('/logs/latest/:device_id', logListrik.getLatestByDevice);
 
-// Galon photo routes
-router.post('/upload-photo', galonPhotoController.uploadPhoto);
-router.get('/photos', galonPhotoController.getPhotos);
-
-// Device control route (lampu/dispenser)
-router.post('/device/:device_id/control', controlDevice);
-
-// Notifikasi
-router.get('/notifications', notificationController.getNotifications);
-router.patch('/notifications/:notif_id/sent', notificationController.markAsSent);
+// Notification
+router.get('/notifications', notifikasi.getNotifications);
+router.patch('/notifications/:notif_id/send', notifikasi.markAsSent);
 
 module.exports = router;

@@ -1,6 +1,7 @@
 require('dotenv').config();
 require('./config/mqttClient');
 require('./config/cronJobs'); 
+require('./config/database');
 
 const express = require('express');
 const app = express();

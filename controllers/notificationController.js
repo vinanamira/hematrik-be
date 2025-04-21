@@ -1,7 +1,6 @@
-const db   = require('../config/database');
-const cron = require('node-cron');
+const db = require('../config/database');
 
-const checkOnlineDevicesAndNotify = async () => {
+async function checkOnlineDevicesAndNotify() {
   try {
     const [devices] = await db.execute(
       "SELECT device_id, device_name FROM Device WHERE status = 'online'"
@@ -18,52 +17,34 @@ const checkOnlineDevicesAndNotify = async () => {
     console.log(`[CRON] ${devices.length} notifikasi disimpan.`);
   } catch (err) {
     console.error('[CRON] Gagal menyimpan notifikasi:', err.message);
-  }
-};
+  }}
 
-cron.schedule('0 17 * * *', () => {
-  console.log('[CRON] Trigger notifikasi 17.00 WIB');
-  checkOnlineDevicesAndNotify();
-}, { timezone: 'Asia/Jakarta' });
-
-const getNotifications = async (req, res) => {
+async function getNotifications(req, res) {
   try {
-    const [devices] = await db.execute('SELECT device_id, device_name FROM Device');
-    const result = [];
-    for (const { device_id, device_name } of devices) {
-      const [[notif]] = await db.execute(
-        `SELECT * FROM Notification_Log
-         WHERE device_id = ?
-         ORDER BY notif_time DESC
-         LIMIT 1`,
-        [device_id]
-      );
-      if (notif) result.push({ device_id, device_name, ...notif });
-    }
-    res.json(result);
+    const [rows] = await db.execute(
+      'SELECT * FROM Notification_Log ORDER BY notif_time DESC'
+    );
+    res.json(rows);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
-};
+}
 
-const markAsSent = async (req, res) => {
+async function markAsSent(req, res) {
   try {
     const { notif_id } = req.params;
-    const [result] = await db.execute(
+    await db.execute(
       'UPDATE Notification_Log SET is_sent = 1 WHERE notif_id = ?',
       [notif_id]
     );
-    if (result.affectedRows === 0) {
-      return res.status(404).json({ message: 'Notifikasi tidak ditemukan' });
-    }
-    res.json({ message: 'Notifikasi ditandai terkirim' });
+    res.json({ message: 'Ditandai terkirim' });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
-};
+}
 
 module.exports = {
   checkOnlineDevicesAndNotify,
   getNotifications,
-  markAsSent
+  markAsSent,
 };

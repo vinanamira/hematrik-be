@@ -24,16 +24,17 @@ async function getDeviceById(req, res) {
 const controllableDevices = ['75AA3A','939788']; 
 async function controlDevice(req, res) {
   const { device_id } = req.params;
-  const { state }     = req.body; // 'online' / 'offline'
+  const { state }     = req.body; // 'ON' / 'OFF'
   
   if (!controllableDevices.includes(device_id)) {
     return res.status(403).json({ message: 'Perangkat tidak dapat dikontrol' });
   }
-  if (!['online','offline'].includes(state)) {
-    return res.status(400).json({ message: 'State harus online atau offline' });
+
+  if (!['ON', 'OFF'].includes(state)) {
+    return res.status(400).json({ message: 'State harus ON atau OFF' });
   }
 
-  const topic = `EMON25/tele/${device_id}/LWT`;
+  const topic = `EMON25/cmnd/${device_id}/POWER2`;
   mqttClient.publish(topic, state, {}, err => {
     if (err) {
       console.error('MQTT publish error:', err);

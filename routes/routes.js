@@ -8,7 +8,13 @@ const notifikasi = require('../controllers/notificationController');
 // Device
 router.get('/devices', device.getAllDevices);
 router.get('/devices/:device_id', device.getDeviceById);
-router.post('/device/:device_id/control', device.controlDevice);
+// router.post('/device/:device_id/control', device.controlDevice);
+
+// Post Control
+router.post('/device/:device_id/control', (req, res) => {
+  res.json({ message: 'test immediate' });
+});
+
 
 // Electricity Log
 router.get('/logs', logListrik.getAllLogs);

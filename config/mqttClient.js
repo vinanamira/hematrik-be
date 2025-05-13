@@ -36,7 +36,6 @@ client.on('reconnect', () => {
   console.log('Reconnecting to MQTT broker...');
 });
 
-
 client.on('message', async (topic, message) => {
   const parts = topic.split('/');
   const deviceId = parts[2];      // device_id seperti '75AA3A'

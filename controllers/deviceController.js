@@ -35,18 +35,24 @@ async function controlDevice(req, res) {
   }
 
   console.log('200');
-  return res.json('jalan');
+//   return res.json('jalan');
 
-  // const topic = `EMON25/cmnd/${device_id}/POWER2`;
-  // mqttClient.publish(topic, state, {}, err => {
-  //   if (err) {
-  //     console.error('MQTT publish error:', err);
-  //     return res.status(500).json({ message: 'Gagal kirim MQTT' });
-  //   }
+ if (!mqttClient.connected) {
+    return res.status(500).json({ message: 'MQTT client not connected' });
+  }
+
+  console.log('About to publish:', topic, state);
+
+  mqttClient.publish(topic, state, {}, err => {
+    console.log('Publish callback called');
+    if (err) {
+      console.error('MQTT publish error:', err);
+      return res.status(500).json({ message: 'Gagal kirim MQTT' });
+    }
     
-  //   console.log(`[MQTT] ${topic} ← ${state}`);
-  //   res.json({ message: `Perangkat ${device_id} dikontrol → ${state}` });
-  // });
+    console.log(`[MQTT] ${topic} ← ${state}`);
+    res.json({ message: `Perangkat ${device_id} dikontrol → ${state}` });
+  });
 }
 
 module.exports = {

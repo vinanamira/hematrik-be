@@ -24,6 +24,19 @@ client.on('connect', () => {
   });
 });
 
+client.on('error', (err) => {
+  console.error('MQTT Error:', err.message);
+});
+
+client.on('offline', () => {
+  console.warn('MQTT client offline');
+});
+
+client.on('reconnect', () => {
+  console.log('Reconnecting to MQTT broker...');
+});
+
+
 client.on('message', async (topic, message) => {
   const parts = topic.split('/');
   const deviceId = parts[2];      // device_id seperti '75AA3A'

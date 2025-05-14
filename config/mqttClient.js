@@ -9,6 +9,9 @@ const client = mqtt.connect({
   port: Number(process.env.MQTT_PORT),
   username: process.env.MQTT_USERNAME,
   password: process.env.MQTT_PASSWORD,
+  reconnectPeriod: 1000,
+  connectTimeout: 4000,
+  clean: true,
 });
 
 const baseTopics = process.env.MQTT_TOPICS.split(',').map(t => t.trim());

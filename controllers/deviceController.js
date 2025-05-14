@@ -36,7 +36,7 @@ async function controlDevice(req, res) {
 
   console.log('200');
 
- const topic = `EMON25/cmnd/${device_id}/POWER2`;
+ const topic = `EMON25/cmnd/${device_id}/POWER1/ON`;
  if (!mqttClient.connected) {
     return res.status(500).json({ message: 'MQTT client not connected' });
   }

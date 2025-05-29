@@ -6,7 +6,7 @@ const lastReceived = {};
 
 const client = mqtt.connect({
   host: process.env.MQTT_HOST,
-  protocol: 'mqtts',
+  protocol: 'mqtt',
   port: Number(process.env.MQTT_PORT),
   username: process.env.MQTT_USERNAME,
   password: process.env.MQTT_PASSWORD,

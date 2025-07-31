@@ -1,4 +1,4 @@
-<h1 align="center" style="font-weight: bold;">KawalTani</h1>
+<h1 align="center" style="font-weight: bold;">Hematrik.id</h1>
 
 <p align="center">
  <a href="#tech">Technologies</a> • 
@@ -14,10 +14,10 @@
 
 <h2 id="technologies">💻 Technologies</h2>
 
-- list of all technologies you used
-- Java
-- MongoDB
-- NodeJS
+- ExpressJS
+- MySQL
+- Cron-Job
+- MQTT Explorer
 
 <h2 id="started">🚀 Getting started</h2>
 

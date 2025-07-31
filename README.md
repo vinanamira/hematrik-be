@@ -3,12 +3,11 @@
 <p align="center">
  <a href="#tech">Technologies</a> • 
  <a href="#started">Getting Started</a> • 
-  <a href="#routes">API Endpoints</a> •
- <a href="#colab">Collaborators</a> 
+ <a href="#routes">API Endpoints</a> 
 </p>
 
 <p align="center">
-    <b>Hematrik is an IoT-based energy monitoring system that enables the real-time monitoring and control of electronic devices (lights, dispensers, and AC) through MQTT data. Backend development uses Express.js and MySQL, and implements an automatic notification feature when devices are turned on outside of working hours. The backend is deployed using PM2 and connected to an external MQTT broker. This system has been implemented in the lecturer's room at University of Mandiri Subang.  </b>
+    <b>Hematrik is an IoT-based energy monitoring system that enables the real-time monitoring and control of electronic devices (lights, dispensers, and AC) through MQTT data. Backend development uses Express.js and MySQL, and implements an automatic notification feature when devices are turned on outside of working hours. The backend is deployed using PM2 and connected to an external MQTT broker. This system has been implemented in the lecturer's room at the University of Mandiri Subang.   </b>
 </p>
 
 <h2 id="technologies">Technology</h2>
@@ -28,34 +27,52 @@ Here you list all prerequisites necessary for running the project:
 
 ## How to use
 
-1. **Set up the OpenAI API:**
-
-   - If you're new to the OpenAI API, [sign up for an account](https://platform.openai.com/signup).
-   - Follow the [Quickstart](https://platform.openai.com/docs/quickstart) to retrieve your API key.
-
-2. **Set the OpenAI API key:**
-
-   2 options:
-
-   - Set the `OPENAI_API_KEY` environment variable [globally in your system](https://platform.openai.com/docs/libraries#create-and-export-an-api-key)
-   - Set the `OPENAI_API_KEY` environment variable in the project: Create a `.env` file at the root of the project and add the following line
-
-    ```bash
-   OPENAI_API_KEY=<your_api_key>
-   ```
-
-4. **Clone the Repository:**
+1. **Clone the Repository:**
 
    ```bash
-   git clone https://github.com/vinanamira/kawaltani-chatbot-be.git
+   git clone https://github.com/vinanamira/hematrik-be.git
    ```
    
-5. **Enter the Project Directory:**
+2. **Enter the Project Directory:**
 
    After the cloning process is complete, enter the folder of the newly created project:
 
    ```bash
-   cd kawaltani-chatbot-be
+   cd hematrik-be
+   ```
+
+3. **Set the database key:**
+
+   Set the environment variable in the project: Create a `.env` file at the root of the project and add the following line
+
+    ```bash
+   DB_HOST=<url_db_host>
+   DB_USER=<db_username>
+   DB_PASSWORD=<db_password>
+   DB_NAME=<db_name>
+   DB_PORT=<db_port>
+   PORT=5000
+   ```
+    
+4. **Set the MQTT key:**
+
+   Set the environment variable in the project: Create a `.env` file at the root of the project and add the following line
+
+    ```bash
+    MQTT_HOST=<url_mqtt_host>
+    MQTT_PORT=<mqtt_port>
+    MQTT_USERNAME=<mqtt_username>
+    MQTT_PASSWORD=<mqtt_password>
+    MQTT_TOPICS=<mqtt_topics>
+    MQTT_CLIENTID=<your_mqtt_clientid>
+   ```
+    
+5. **Set the API key:**
+
+   Set `API_KEY` the environment variable in the project: Create a `.env` file at the root of the project and add the following line
+
+    ```bash
+   API_KEY=<your_api_key>
    ```
 
 6. **Install dependencies:**
@@ -63,16 +80,16 @@ Here you list all prerequisites necessary for running the project:
    Run in the project root:
 
    ```bash
-   composer install
+   npm install
    ```
 
 7. **Run the app:**
 
    ```bash
-   php artisan serve
+   npm start
    ```
 
-   The app will be available at [`http://127.0.0.1:8000`](http://127.0.0.1:8000).
+   The app will be available at [`http://127.0.0.1:5000`](http://127.0.0.1:5000).
 
 <h2 id="routes">📍 API Endpoints</h2>
 
@@ -80,122 +97,163 @@ Here is a list of the main API routes with the expected request bodies.
 ​
 | Route               | Description                                          
 |----------------------|-----------------------------------------------------
-| <kbd>POST /api/chat/send</kbd>     | Sending a new message and getting a reply from the AI [request details](#post-send-detail)
-| <kbd>GET /api/chat/names</kbd>     | Taking all titles from the conversation history [response details](#get-all-chat-detail)
-| <kbd>GET /api/chat/history/{name_chat}</kbd>     | Taking message history details from a conversation based on its title [response details](#get-chat-detail)
-| <kbd>DELETE /api/chat/history/{name_chat}</kbd>     | Deleting a conversation history based on its title [response details](#delete-chat-detail)
-| <kbd>PUT /api/chat/rename-chat/{name_chat}</kbd>     | Changing the title of an existing conversation history [request details](#rename-chat-detail)
+| <kbd>GET /api/devices</kbd>     | Taking a list of all devices (lights, AC, dispensers) registered in the system [response details](#get-all-device)
+| <kbd>POST /api/device/:device_id/control</kbd>     | Sending a command to change the status of a specific device [request details](#post-device-detail)
+| <kbd>GET /api/logs</kbd>     | Taking the history of electricity usage logs[response details](#get-logs-detail)
+| <kbd>GET /api/notifications</kbd>     | Taking the list of automatic notifications generated by the system [response details](#get-notification-detail)
 
-<h3 id="post-send-detail">POST /api/chat/send</h3>
+<h2>Devices</h2>
 
-**REQUEST**
-```json
-{
-  "message": "Saya mau melihat data pH  di area 2 tanggal 19 Mei",
-  "name_chat": ""
-}
+<h3 id="#get-all-device">GET /api/devices</h3>
+
+**AUTHORIZATION**
+
 ```
-
-**RESPONSE**
-```json
-{
-    "message": "Saya mau melihat data pH  di area 2 tanggal 19 Mei",
-    "response": "Ringkasan Kondisi Lahan:\n\nTanggal 19 Mei 2025:\n- Sensor pH Area 2: Terdapat lonjakan pH hingga mencapai angka 9. Kemungkinan area lahan di sekitar sensor tersebut saat ini sedang menjadi sangat basa. Disarankan untuk dilakukan pengecekan lebih lanjut terkait penyebab dan tindakan rektifkasinya.",
-    "name_chat": "Saya mau melihat data pH  di area 2 tang..."
-}
+Key : x-api-key
+Value : <value>
 ```
-<h3 id="get-all-chat-detail">GET /api/chat/names</h3>
 
 **RESPONSE**
 ```json
 [
-    {
-        "session_id": 3,
-        "name_chat": "Saya mau melihat data pH  di area 2 tang...",
-        "updated_at": "2025-07-31T07:22:41.000000Z"
-    },
-    {
-        "session_id": 2,
-        "name_chat": "TestWhitebox",
-        "updated_at": "2025-07-31T07:21:54.000000Z"
-    },
-    {
-        "session_id": 1,
-        "name_chat": "Testing",
-        "updated_at": "2025-07-29T19:47:31.000000Z"
-    }
+  {
+    "device_id": "4B8A13",
+    "device_name": "AC",
+    "device_type": "ac",
+    "mqtt_topic": "EMON25/tele/4B8A13",
+    "location": "Universitas Mandiri Subang, Ruang Dosen Fakultas Teknik",
+    "status": "offline"
+  },
+  {
+    "device_id": "75AA3A",
+    "device_name": "Dispenser",
+    "device_type": "dispenser",
+    "mqtt_topic": "EMON25/tele/75AA3A",
+    "location": "Universitas Mandiri Subang, Ruang Dosen Fakultas Teknik",
+    "status": "offline"
+  },
+  {
+    "device_id": "939788",
+    "device_name": "Lampu",
+    "device_type": "lampu",
+    "mqtt_topic": "EMON25/tele/939788",
+    "location": "Universitas Mandiri Subang, Ruang Dosen Fakultas Teknik",
+    "status": "online"
+  }
 ]
 ```
 
-<h3 id="get-chat-detail">GET /api/chat/history/{name_chat}</h3>
+
+<h3 id="post-device-detail">POST /api/device/:device_id/control</h3>
+
+**AUTHORIZATION**
+
+```
+Key : x-api-key
+Value : <value>
+```
+
+**PATH VARIABLES**
+
+```
+device_id : 75AA3A
+```
+
+**REQUEST**
+
+```json
+{
+    "state": "ON"
+}
+```
+
+
+**RESPONSE**
+```json
+{
+  "message": "Perangkat 75AA3A dikontrol → ON"
+}
+```
+<h2>Electricity Consumption</h2>
+
+<h3 id="get-logs-detail">GET /api/logs</h3>
+
+**AUTHORIZATION**
+
+```
+Key : x-api-key
+Value : <value>
+```
 
 **RESPONSE**
 ```json
 [
-    {
-        "message": "Saya mau melihat data pH  di area 2 tanggal 19 Mei",
-        "response": "Pada tanggal 19 Mei 2025, data sensor menunjukkan kondisi lahan sebagai berikut: PH pada area 2 mencapai angka 9. Temuan ini mengindikasikan tingkat keasaman yang relatif tinggi, yang sebaiknya dijaga agar tidak terus meningkat dan berdampak buruk pada ketersediaan hara bagi tanaman.",
-        "sent_at": "2025-07-31T07:21:54.000000Z"
-    },
-    {
-        "message": "Saya mau melihat data pH  di area 2 tanggal 19 Mei",
-        "response": "Ringkasan Kondisi Lahan:\nPada tanggal 19 Mei 2025, di area 2, nilai pH mencapai tingkat tertinggi dengan angka 9. Data ini menandakan kondisi lahan sedikit basa pada area tersebut. Informasi ini penting untuk pemantauan kesehatan dan kebutuhan perawatan tanaman, terutama tanaman tertentu yang peka terhadap keasaman tanah.",
-        "sent_at": "2025-07-31T07:22:27.000000Z"
-    }
+  {
+    "log_id": 1135,
+    "device_id": "4B8A13",
+    "total_kwh": "484.692",
+    "today_kwh": "77.128",
+    "yesterday_kwh": "1.702",
+    "power": 21648,
+    "apparent_power": 109526,
+    "reactive_power": 65535,
+    "factor": "0.20",
+    "voltage": "218.00",
+    "current": "502.87",
+    "time_recorded": "2025-04-21T08:46:30.000Z"
+  },
+  {
+    "log_id": 1134,
+    "device_id": "75AA3A",
+    "total_kwh": "4.519",
+    "today_kwh": "0.000",
+    "yesterday_kwh": "0.000",
+    "power": 0,
+    "apparent_power": 0,
+    "reactive_power": 0,
+    "factor": "0.00",
+    "voltage": "226.00",
+    "current": "0.00",
+    "time_recorded": "2025-04-21T08:44:18.000Z"
+  },
+  {
+    "log_id": 1133,
+    "device_id": "4B8A13",
+    "total_kwh": "484.109",
+    "today_kwh": "76.545",
+    "yesterday_kwh": "1.702",
+    "power": 21484,
+    "apparent_power": 107967,
+    "reactive_power": 65535,
+    "factor": "0.20",
+    "voltage": "214.00",
+    "current": "504.28",
+    "time_recorded": "2025-04-21T08:42:30.000Z"
+  },
 ]
 ```
 
-<h3 id="delete-chat-detail">DELETE /api/chat/history/{name_chat}</h3>
+<h2>Notification<//h2>
+
+<h3 id="get-notification-detail">GET /api/notifications</h3>
+
+**AUTHORIZATION**
+
+```
+Key : x-api-key
+Value : <value>
+```
+
 
 **RESPONSE**
 ```json
-{
-    "message": "Percakapan berhasil dihapus."
-}
+[
+  {
+    "notif_id": 3,
+    "device_id": "4B8A13",
+    "notif_message": "AC masih menyala pada pukul 17.00",
+    "is_sent": 0,
+    "notif_time": "2025-04-21T10:00:00.000Z"
+  }
+]
 ```
-
-<h3 id="#rename-chat-detail">PUT /api/chat/rename-chat/{name_chat}</h3>
-
-**REQUEST**
-```json
-{
-  "newName": "Data tanggal 19 Mei"
-}
-```
-
-**RESPONSE**
-```json
-{
-    "message": "Nama chat berhasil diganti."
-}
-```
-
-
-<h2 id="colab">🤝 Collaborators</h2>
-
-Special thank you for all people that contributed for this project.
-
-<table>
-  <tr>
-    <td align="center">
-      <a href="https://github.com/annisasha">
-        <img src="https://avatars.githubusercontent.com/u/152659249?v=4" width="100px;" alt="Fernanda Kipper Profile Picture"/><br>
-        <sub>
-          <b>Annisa Shafira</b>
-        </sub>
-      </a>
-    </td>
-    <td align="center">
-      <a href="https://github.com/shalmanrafli30">
-        <img src="https://avatars.githubusercontent.com/u/151373806?v=4" width="100px;" alt="Shalman Rafli Picture"/><br>
-        <sub>
-          <b>Shalman Rafli</b>
-        </sub>
-      </a>
-    </td>
-</table>
-
-
-<h3>Documentations that might help</h3>
-
-OpenAI PHP Client Documentation : https://github.com/openai-php/client

@@ -1,7 +1,7 @@
 <h1 align="center" style="font-weight: bold;">Hematrik</h1>
 
 <p align="center">
- <a href="#tech">Technologies</a> • 
+ <a href="#tech">Technology</a> • 
  <a href="#started">Getting Started</a> • 
  <a href="#routes">API Endpoints</a> 
 </p>
